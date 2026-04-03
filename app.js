@@ -183,13 +183,12 @@ function buildMinimizedDFA(originalDfa, finalPartitions) {
 }
 
 // Visualizer Engine
-// Visualizer Engine
 function drawGraph(dfa, containerId) {
     let nodesData = [];
     let edgesData = [];
     let processedEdges = {};
 
-    // --- NEW: Add a dummy text node to act as the origin of the start arrow ---
+    // Add a dummy text node to act as the origin of the start arrow
     nodesData.push({
         id: 'start_dummy_node',
         label: 'Start',
@@ -197,7 +196,7 @@ function drawGraph(dfa, containerId) {
         font: { size: 14, color: '#e53e3e', bold: true } 
     });
 
-    // --- NEW: Draw an edge from the dummy node to the actual start state ---
+    // Draw an edge from the dummy node to the actual start state
     edgesData.push({
         from: 'start_dummy_node',
         to: dfa.start,
