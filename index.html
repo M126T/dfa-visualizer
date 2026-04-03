@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFA Minimization Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>DFA Minimization Visualizer</h1>
+        <p>Define your states, build the transitions, and visualize the optimized automaton.</p>
+    </header>
+
+    <main>
+        <div class="panel" id="step1-panel">
+            <h3>Step 1: Define DFA Parameters</h3>
+            <div class="form-group">
+                <label>Alphabet (comma separated, e.g., 0,1):</label>
+                <input type="text" id="input-alphabet" value="0,1">
+            </div>
+            <div class="form-group">
+                <label>States (comma separated, e.g., q0,q1,q2):</label>
+                <input type="text" id="input-states" value="q0,q1,q2,q3">
+            </div>
+            <div class="form-group">
+                <label>Start State:</label>
+                <input type="text" id="input-start" value="q0">
+            </div>
+            <div class="form-group">
+                <label>Final/Accept States (comma separated):</label>
+                <input type="text" id="input-accept" value="q2">
+            </div>
+            <button id="btn-setup">Next: Define Transitions</button>
+            <div id="setup-error" class="error-msg"></div>
+        </div>
+
+        <div class="panel" id="step2-panel" style="display: none;">
+            <h3>Step 2: Define Transitions</h3>
+            <p>Enter the destination state for each input.</p>
+            <table id="transition-table">
+                </table>
+            <button id="btn-minimize">Visualize & Minimize</button>
+            <button id="btn-back" class="secondary-btn">Back</button>
+            <div id="transition-error" class="error-msg"></div>
+        </div>
+
+        <div class="output-grid" id="output-panel" style="display: none;">
+            <div class="panel partition-panel">
+                <h3>Step-by-Step Partitions</h3>
+                <div id="partition-output"></div>
+            </div>
+            
+            <div class="panel graph-panel">
+                <h3>Original DFA</h3>
+                <div id="network-original" class="network-container"></div>
+            </div>
+
+            <div class="panel graph-panel">
+                <h3>Minimized DFA</h3>
+                <div id="network-minimized" class="network-container"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
