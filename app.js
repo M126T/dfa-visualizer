@@ -79,22 +79,33 @@ function processDFA() {
         }
     }
 
-    // Logic: Minimization Process
     const outputDiv = document.getElementById('partition-output');
     outputDiv.innerHTML = "";
     document.getElementById('output-panel').style.display = 'grid';
 
-    // Draw Original
+    // 1. Draw the Original DFA (including unreachable states)
     drawGraph(globalDFA, 'network-original');
 
-    let partitions = getInitialPartition(globalDFA);
+    // 2. Clone the DFA so we don't destroy the original data
+    let processingDFA = JSON.parse(JSON.stringify(globalDFA));
+
+    // 3. Remove Unreachable States
+    let removedStates = removeUnreachableStates(processingDFA);
+    if (removedStates.length > 0) {
+        outputDiv.innerHTML += `<strong>Pre-processing:</strong>\nRemoved Unreachable States: {${removedStates.join(', ')}}\n\n`;
+    } else {
+        outputDiv.innerHTML += `<strong>Pre-processing:</strong>\nNo unreachable states found.\n\n`;
+    }
+
+    // 4. Logic: Minimization Process
+    let partitions = getInitialPartition(processingDFA);
     outputDiv.innerHTML += `<strong>Initial Partition (P0):</strong>\n${formatPartition(partitions)}\n\n`;
 
     let changing = true;
     let step = 1;
 
     while (changing) {
-        let newPartitions = refinePartitions(partitions, globalDFA);
+        let newPartitions = refinePartitions(partitions, processingDFA);
         if (JSON.stringify(newPartitions) === JSON.stringify(partitions)) {
             changing = false;
             outputDiv.innerHTML += `<strong>Final Partition (P${step}) - No changes:</strong>\n${formatPartition(newPartitions)}\n\n`;
@@ -105,9 +116,44 @@ function processDFA() {
         }
     }
 
-    // Map Minimized DFA
-    let minimizedDFA = buildMinimizedDFA(globalDFA, partitions);
+    // 5. Map Minimized DFA
+    let minimizedDFA = buildMinimizedDFA(processingDFA, partitions);
     drawGraph(minimizedDFA, 'network-minimized');
+}
+
+// --- NEW FUNCTION: Breadth-First Search to prune dead states ---
+function removeUnreachableStates(dfa) {
+    let reachable = new Set();
+    let queue = [dfa.start];
+    reachable.add(dfa.start);
+
+    // BFS to find all reachable states
+    while (queue.length > 0) {
+        let current = queue.shift();
+        for (let sym of dfa.alphabet) {
+            let nextState = dfa.transitions[current][sym];
+            if (nextState && !reachable.has(nextState)) {
+                reachable.add(nextState);
+                queue.push(nextState);
+            }
+        }
+    }
+
+    let reachableArray = Array.from(reachable);
+    let removedStates = dfa.states.filter(s => !reachable.has(s));
+
+    // Update the DFA object to only include reachable states
+    dfa.states = reachableArray;
+    dfa.accept = dfa.accept.filter(s => reachable.has(s));
+
+    // Clean up transitions dictionary
+    let newTransitions = {};
+    for (let state of reachableArray) {
+        newTransitions[state] = dfa.transitions[state];
+    }
+    dfa.transitions = newTransitions;
+
+    return removedStates;
 }
 
 function getInitialPartition(dfa) {
@@ -151,7 +197,6 @@ function buildMinimizedDFA(originalDfa, finalPartitions) {
     let minStart = "";
     
     finalPartitions.forEach(group => {
-        // Create a clean name for the merged state, e.g., "q0,q1"
         let groupName = group.join(','); 
         minStates.push(groupName);
         
@@ -188,7 +233,6 @@ function drawGraph(dfa, containerId) {
     let edgesData = [];
     let processedEdges = {};
 
-    // Add a dummy text node to act as the origin of the start arrow
     nodesData.push({
         id: 'start_dummy_node',
         label: 'Start',
@@ -196,12 +240,11 @@ function drawGraph(dfa, containerId) {
         font: { size: 14, color: '#e53e3e', bold: true } 
     });
 
-    // Draw an edge from the dummy node to the actual start state
     edgesData.push({
         from: 'start_dummy_node',
         to: dfa.start,
         arrows: 'to',
-        color: { color: '#e53e3e' }, // Red arrow to stand out
+        color: { color: '#e53e3e' }, 
         length: 50
     });
 
@@ -211,9 +254,9 @@ function drawGraph(dfa, containerId) {
         nodesData.push({
             id: state,
             label: state,
-            shape: 'circle', // PERFECT CIRCLES
+            shape: 'circle', 
             color: { background: 'white', border: '#1a202c' },
-            borderWidth: isAccept ? 4 : 2, // Thicker border simulates accept state
+            borderWidth: isAccept ? 4 : 2, 
             font: { size: 16, face: 'Tahoma', bold: true },
             margin: 10
         });
@@ -222,7 +265,6 @@ function drawGraph(dfa, containerId) {
             let target = dfa.transitions[state][sym];
             let edgeId = `${state}-${target}`;
             
-            // Group multiple symbols on the same edge (e.g. "0, 1")
             if (processedEdges[edgeId]) {
                 processedEdges[edgeId].label += `, ${sym}`;
             } else {
@@ -239,7 +281,6 @@ function drawGraph(dfa, containerId) {
         });
     });
 
-    // Add our processed transition edges to the edges array
     edgesData = edgesData.concat(Object.values(processedEdges));
 
     const container = document.getElementById(containerId);
